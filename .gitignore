@@ -1,3 +1,15 @@
-*/**.png
-*/**.exe
-*/**.o
+# 이미지 파일
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.svg
+
+# 실행 파일 (Windows + 일반 실행 파일)
+*.exe
+*.out
+
+# 오브젝트 파일
+*.o
+*.obj
