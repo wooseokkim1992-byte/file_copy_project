@@ -4,27 +4,44 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "file_search.h"
+#include <limits.h>
 
-#define MAX_FILE_PATH 64
-#define BUF_SIZE 4096
-
-void list_directory(const char *dir_path){
+int list_directory(const char *dir_path){
     DIR *dir = opendir(dir_path);
     if(!dir){
         perror("open dir failed!");
-        return ;
+        return 1;
     }
     struct dirent *entry;
     while((entry=readdir(dir))!=NULL){
-        if(strcmp(entry->d_name,".")||strcmp(entry->d_name,"..")){
+        if(strcmp(entry->d_name,".")==0||strcmp(entry->d_name,"..")==0){
             continue;
         }
-        printf("inode:%d  name:%s type:%s\n",entry->d_ino,entry->d_name,entry->d_type);
+        printf("inode:%llu  name:%s type:%hhu\n",entry->d_ino,entry->d_name,entry->d_type);
     }
     closedir(dir);
+    return 0;
 }
 
+void get_input(char *buf,size_t size){
+    printf("Enter file or directory name to copy(maximum 256 charactors): ");
+    //fgets 는 size-1 만큼 줄 바꾸기 문자(\n)까지 혹은 size-1 과 같을 때 까지 읽고, 
+    // buf에 쓴 다음 맨 뒤에는 "\0"을 채워 넣는다.
+    fgets(buf,size,stdin);
+    // 문자열에서 \n 을 찾아서 그 위치를 \0 으로 바꿔줌!
+    buf[strcspn(buf,"\n")]=0;
+}
+
+int is_directory(const char *path){
+    struct stat st;
+    if(stat(path,&st)<0){
+        perror("stat failed");
+        return -1;
+    }
+    return S_ISDIR(st.st_mode);
+}
 
 unsigned short search_and_open_dir(const char *src_dir_name,const char *dst_dir_name,const char *filename){
     DIR *src_dir = opendir(src_dir_name);
@@ -102,7 +119,7 @@ char* reconstruct_path_1(const char* dir_path,const char* file_name){
     char *final_path;
     size_t len = strlen(dir_path)+strlen(file_name)+2;
     final_path=malloc(len);
-    snprintf(final_path,MAX_FILE_PATH,"%s/%s",dir_path,file_name);
+    snprintf(final_path,PATH_MAX,"%s/%s",dir_path,file_name);
     return final_path;
 }
 
