@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -34,13 +33,19 @@ void get_input(char *buf,size_t size){
     buf[strcspn(buf,"\n")]=0;
 }
 
-int is_directory(const char *path){
+int check_file_or_dir(const char *path){
     struct stat st;
     if(stat(path,&st)<0){
         perror("stat failed");
         return -1;
     }
-    return S_ISDIR(st.st_mode);
+    if(S_ISDIR(st.st_mode)){
+        return 1;
+    }
+    if(S_ISREG(st.st_mode)){
+        return 2;
+    }
+    return -1;
 }
 
 unsigned short search_and_open_dir(const char *src_dir_name,const char *dst_dir_name,const char *filename){
@@ -74,6 +79,54 @@ unsigned short search_and_open_dir(const char *src_dir_name,const char *dst_dir_
     return 0;
 }
 
+int copy_resursive(const char *src_path,const char *dest_path){
+    struct stat st;
+    if(stat(src_path,&st)<0){
+        perror("stat failed");
+        return -1;
+    }
+    if(S_ISREG(st.st_mode)){
+        return copy_file(src_path, dest_path);
+    }
+    if(S_ISDIR(st.st_mode)){
+        if(mkdir(dest_path, 0755)<0){
+            perror("mkdir failed");
+            return -1;
+        }
+        DIR *dir = opendir(src_path);
+        if(!dir){
+            perror("opening src dir failed!");
+            return -1;
+        }
+        struct dirent *entry;
+        while((entry=readdir(dir))!=NULL){
+            if(strcmp(entry->d_name, ".")==0||strcmp(entry->d_name, "..")==0){
+                continue;
+            }
+            char *src = reconstruct_path_1(src_path, entry->d_name);
+            char *dest = reconstruct_path_1(dest_path, entry->d_name);
+            printf("src : %s\n",src);
+            printf("dest : %s\n",dest);
+            copy_resursive(src, dest);
+            free(src);
+            free(dest);
+        }
+        closedir(dir);
+    }
+    return 0;
+}
+
+int move_file(const char *src_path,const char *dest_path){
+    int file_type = check_file_or_dir(src_path);
+    if(file_type==1){
+        copy_resursive(src_path, dest_path);
+    }else if(file_type==2){
+        copy_file(src_path, dest_path);
+    }
+    return 0;
+}
+
+
 int copy_file(const char* src,const char* dest){
     int in_fd = open(src,O_RDONLY);
     if(in_fd<0){
@@ -93,11 +146,8 @@ int copy_file(const char* src,const char* dest){
     printf("dest file fd : %d\n",out_fd);
     while((n=read(in_fd,buf,sizeof(buf)))>0){
         ssize_t total=0;
-        printf("%zd was read to fd : %d\n",n,in_fd);
-
         while(total<n){
             ssize_t written_size = write(out_fd,buf+total,n-total);
-            printf("%zd written to fd : %d\n",written_size,out_fd);
             if(written_size<=0){
                 perror("write failed\n");
                 close(in_fd);
