@@ -7,6 +7,10 @@
 #include "file_search.h"
 #include <limits.h>
 
+const char* type_into_string(const int file_type){
+    return filetype_str[file_type];
+}
+
 int list_directory(const char *dir_path){
     DIR *dir = opendir(dir_path);
     if(!dir){
@@ -18,7 +22,17 @@ int list_directory(const char *dir_path){
         if(strcmp(entry->d_name,".")==0||strcmp(entry->d_name,"..")==0){
             continue;
         }
-        printf("inode:%llu  name:%s type:%hhu\n",entry->d_ino,entry->d_name,entry->d_type);
+        const char*file_type = type_into_string(entry->d_type);
+        if(
+            file_type==NULL||
+            (
+                strcmp(file_type,"DIRECTORY")!=0&&
+                strcmp(file_type,"REGULAR_FILE")!=0
+            )
+        ){
+            continue;
+        }
+        printf("name:%s type:%s\n",entry->d_name,file_type);
     }
     closedir(dir);
     return 0;
@@ -33,19 +47,19 @@ void get_input(char *buf,size_t size){
     buf[strcspn(buf,"\n")]=0;
 }
 
-int check_file_or_dir(const char *path){
+const char* check_file_or_dir(const char *path){
     struct stat st;
     if(stat(path,&st)<0){
         perror("stat failed");
-        return -1;
+        return NULL;
     }
     if(S_ISDIR(st.st_mode)){
-        return 1;
+        return filetype_str[FILETYPE_DIR];
     }
     if(S_ISREG(st.st_mode)){
-        return 2;
+        return filetype_str[FILETYPE_REG];
     }
-    return -1;
+    return NULL;
 }
 
 unsigned short search_and_open_dir(const char *src_dir_name,const char *dst_dir_name,const char *filename){
@@ -117,10 +131,10 @@ int copy_resursive(const char *src_path,const char *dest_path){
 }
 
 int move_file(const char *src_path,const char *dest_path){
-    int file_type = check_file_or_dir(src_path);
-    if(file_type==1){
+    const char *file_type = check_file_or_dir(src_path);
+    if(strcmp(file_type,filetype_str[DT_DIR])==0){
         copy_resursive(src_path, dest_path);
-    }else if(file_type==2){
+    }else if(strcmp(file_type,filetype_str[DT_REG])==0){
         copy_file(src_path, dest_path);
     }
     return 0;

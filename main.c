@@ -8,9 +8,7 @@ int main(int argc,char **argv){
         fprintf(stderr,"Usage: %s <src_dir> <dst_dir>\n",argv[0]);
         return 1;
     }
-    const char*src_dir=argv[1];
-    const char*dest_dir=argv[2];
-    if(list_directory(src_dir)!=0){
+    if(list_directory(argv[1])!=0){
         fprintf(stderr,"Failed to list up files under src directory\n");
         return 1;
     }
