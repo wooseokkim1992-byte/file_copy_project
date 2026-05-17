@@ -1,16 +1,5 @@
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include "socket_common.h"
 
+#include "socket_common.h"
 
 int main(int argc, char **argv){
     if(argc<2){
@@ -59,6 +48,14 @@ int main(int argc, char **argv){
         close(server_fd);
         return 1;
     }
+    printf("connected with client \n");
+    char filename[FILENAME_MAX];
+    if(receive_file_name(client_fd, filename)!=0){
+        close(client_fd);
+        close(server_fd);
+        return 1;
+    }
+    printf("received file name : %s\n",filename);
     close(client_fd);
     close(server_fd);
     return 0;

@@ -3,11 +3,35 @@
 
 #include <stdint.h>
 #include <unistd.h>
-
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <limits.h>
 #define TCP_FILE_BUF_SIZE 4096
 #define TCP_FILE_NAME_MAX 255
 #define BUF_SIZE 4096
 #define MAX_PORT_NUM 65535
+
+ssize_t send_data_byte_to_other_side(int sock_fd,void *chunk,ssize_t len);
+ssize_t revc_data_byte_from_other_side(int sock_fd,void *chunk,ssize_t len);
+int send_file_name(int sock_fd,char *filename);
+int receive_file_name(int client_sock_fd,char *buf);
+int get_port_num(const char *port_str,uint16_t *ptr);
+int check_ip_regex(const char *ip);
+int append_file_name(char*path,size_t path_cap);
+int list_up_file_and_dirs(char *path);
+int set_connection_with_server(
+    int *sock_fd,const char*server_ip,
+    uint16_t port
+);
 
 static inline uint64_t tcp_htonll(uint64_t value)
 {

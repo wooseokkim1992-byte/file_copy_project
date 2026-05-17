@@ -1,11 +1,13 @@
 #ifndef FILE_SEARCH
 #define FILE_SEARCH
-#include <stdlib.h>
     #define MAX_FILE_PATH 4096
     #define BUF_SIZE 4096
     #define MAX_FILE_NAME 256
     #define FILE_TYPE_COUNT 9
     #include <dirent.h>
+    #include <stdlib.h>
+    #include <sys/stat.h>
+    #include <limits.h>
 
     typedef enum e_filetype {
         FILETYPE_UNKNOWN = DT_UNKNOWN,

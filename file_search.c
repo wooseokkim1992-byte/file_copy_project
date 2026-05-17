@@ -1,11 +1,9 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <dirent.h>
 #include <string.h>
-#include <sys/stat.h>
 #include "file_search.h"
-#include <limits.h>
 
 const char* type_into_string(const int file_type){
     return filetype_str[file_type];

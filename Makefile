@@ -5,20 +5,25 @@ DIR_PATH := .
 FILE_SEARCH := file_search
 SERVER := server
 CLI := client
+SOCKET_FN := socket_fn
 CC := gcc
 CFLAGS := -Wall 
 
 
 all : $(SERVER) $(CLI) 
 
-$(SERVER): $(SERVER).c
-	$(CC) $(CFLAGS) $< -o $@
+$(FILE_SEARCH).o : $(FILE_SEARCH).c 
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(CLI) : $(CLI).c $(FILE_SEARCH).o 
+$(SOCKET_FN).o: $(SOCKET_FN).c 
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(SERVER): $(SERVER).c $(SOCKET_FN).o $(FILE_SEARCH).o
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(FILE_SEARCH).o : $(FILE_SEARCH).c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(CLI) : $(CLI).c $(SOCKET_FN).o $(FILE_SEARCH).o
+	$(CC) $(CFLAGS) $^ -o $@
+
 
 clean :
 	rm -f $(DIR_PATH)/*.o
