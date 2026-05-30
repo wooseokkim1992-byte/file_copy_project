@@ -1,5 +1,7 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "file_search.h"
 #include "socket_common.h"
 
 int main(int argc,char **argv){
@@ -23,15 +25,22 @@ int main(int argc,char **argv){
         return 1;
     }
     char path[PATH_MAX];
-    if(list_up_file_and_dirs(path)!=0){
+    char file_name[MAX_FILE_NAME];
+    if(list_up_file_and_dirs(path,file_name)!=0){
         close(sock_fd);
         return 1;
     }
-    if(send_file_name(sock_fd,path)!=0){
+    printf("filename : %s\n",file_name);
+    if(send_file_name(sock_fd,file_name)!=0){
         close(sock_fd);
         return 1;
     }
-    if(send_file_size(sock_fd,path)<0){
+    uint64_t file_size=0;
+    if((file_size=send_file_size(sock_fd,path))<0){
+        close(sock_fd);
+        return 1;
+    }
+    if(send_file(sock_fd, path,file_size)<0){
         close(sock_fd);
         return 1;
     }

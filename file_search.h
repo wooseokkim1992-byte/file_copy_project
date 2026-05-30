@@ -8,6 +8,7 @@
     #include <stdlib.h>
     #include <sys/stat.h>
     #include <limits.h>
+    #include <sys/types.h>
 
     typedef enum e_filetype {
         FILETYPE_UNKNOWN = DT_UNKNOWN,
@@ -42,4 +43,7 @@
     int move_file(const char *src_path,const char *dest_path);
     const char* check_file_or_dir(const char *path);
     uint64_t get_file_size(const char *file_path);
+    ssize_t write_chunk_to_file(int fd,char *buf,ssize_t chunk_size);
+    ssize_t read_chunk_data(int fd,char *buf,ssize_t len);
+
 #endif

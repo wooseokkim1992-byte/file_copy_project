@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -138,7 +139,6 @@ int move_file(const char *src_path,const char *dest_path){
     return 0;
 }
 
-
 int copy_file(const char* src,const char* dest){
     int in_fd = open(src,O_RDONLY);
     if(in_fd<0){
@@ -192,4 +192,37 @@ uint64_t get_file_size(const char *file_path){
         return -1;
     }
     return st.st_size;
+}
+
+ssize_t read_chunk_data(int fd,char *buf,ssize_t len){
+    ssize_t total = 0;
+    while(total<len){
+        ssize_t n = read(fd,buf+total,len-total);
+        if(n<0){
+            fprintf(stderr,"error occurred while reading file");
+            return -1;
+        }
+        if(n==0){
+            break;
+        }
+        total+=n;
+    }
+    return total;
+}
+
+ssize_t write_chunk_to_file(int fd,char *buf,ssize_t chunk_size){
+    ssize_t total = 0;
+    while(total<chunk_size){
+        ssize_t n = write(fd,buf+total,chunk_size-total);
+        if(n<0){
+            fprintf(stderr,"failed to write on file");
+            return -1;
+        }
+        if (n == 0) {
+            fprintf(stderr, "write returned 0\n");
+            return -1;
+        }
+        total+=n;
+    }
+    return total;    
 }

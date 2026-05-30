@@ -33,7 +33,7 @@ ssize_t send_data_byte_to_other_side(int sock_fd,void *chunk,ssize_t len){
     ssize_t total = 0;
     while(total<len){
         ssize_t sent_size = send(sock_fd, buf+total, len-total, 0);
-        if(sent_size<=-1){
+        if(sent_size<=0){
             return -1;
         }
         total+=sent_size;
@@ -77,18 +77,18 @@ int send_file_name(int sock_fd,char *filename){
     return 0;
 }
 
-int send_file_size(const int sock_fd,const char *file_path){
-    int file_size=0;
+uint64_t send_file_size(const int sock_fd,const char *file_path){
+    uint64_t file_size=0;
     if((file_size=get_file_size(file_path))<0){
         return 1;
     }
-    printf("file size : %d  ",file_size);
+    printf("file size : %lld  ",file_size);
     uint64_t net_file_size = tcp_htonll(file_size);
     printf("net file size : %lld\n",net_file_size);
     if(send_data_byte_to_other_side(sock_fd,&net_file_size, sizeof(net_file_size))<0){
         return -1;
     }
-    return 0;
+    return file_size;
 }
 
 uint64_t receive_file_size(const int sock_fd){
@@ -99,7 +99,9 @@ uint64_t receive_file_size(const int sock_fd){
     return tcp_ntohll(file_size);
 }
 
-
+int upload_file(){
+    return 0;
+}
 
 int get_port_num(const char *port_str,uint16_t *ptr){
     int port = atoi(port_str);
@@ -155,12 +157,11 @@ int append_file_name(char*path,size_t path_cap){
 }
 
 
-int list_up_file_and_dirs(char *path){
+int list_up_file_and_dirs(char *path,char *file_name){
     if(getcwd(path,PATH_MAX)==NULL){
         fprintf(stderr,"Failed to get current directory");
         return 1;
     }
-    printf("directory now at : %s",path);
     while(1){
         list_directory(path);
         if(append_file_name(path,PATH_MAX)!=0){
@@ -177,6 +178,12 @@ int list_up_file_and_dirs(char *path){
         }
     }
     printf("new path : %s\n",path);
+    char *temp=strrchr(path,'/');
+    if(strlen(temp)>MAX_FILE_NAME){
+        fprintf(stderr,"file name size truncated!");
+        return 1;
+    }
+    memcpy(file_name,temp+1,strlen(temp));
     return 0;
 }
 
@@ -204,5 +211,59 @@ int set_connection_with_server(
         close(*sock_fd);
         return 1;
     }
+    return 0;
+}
+
+int send_file(const int sock_fd,const char *file_path,uint64_t file_size){
+    int fd = open(file_path,O_RDONLY);
+    if(fd<0){
+        fprintf(stderr,"failed to open file");
+        return 1;
+    }
+    ssize_t n;
+    ssize_t total_sent=0;
+    char buf[BUF_SIZE];
+    while(total_sent<file_size){
+        if((n=read_chunk_data(fd,buf,BUF_SIZE))<0){
+            close(fd);
+            return -1;
+        }
+        if(n==0){
+            fprintf(stderr, "unexpected EOF\n");
+            close(fd);
+            return -1;
+        }
+        if((n=send_data_byte_to_other_side(sock_fd,buf,n))<0){
+            return -1;
+        }
+        total_sent+=n;
+    }
+    close(fd);
+    return 0;    
+}
+
+int recv_file(const int sock_fd, const char* new_file_path,ssize_t file_size){
+    int fd = open(new_file_path,O_WRONLY|O_CREAT|O_TRUNC,0644);
+    if(fd<0){
+        fprintf(stderr,"failed to open and create file");
+        return 1;
+    }
+    uint64_t n;
+    uint64_t received = 0;
+    char buf[BUF_SIZE];
+    while(received<file_size){
+        size_t remain = file_size - received;
+        size_t chunk = remain > BUF_SIZE ? BUF_SIZE : remain;
+        if((n=revc_data_byte_from_other_side(sock_fd, buf, chunk))<0){
+            fprintf(stderr,"error occurred while exchange data!");
+            close(fd);
+            return -1;
+        }
+        if(write_chunk_to_file(fd,buf,n)<0){
+            return -1;
+        }
+        received+=n;
+    }
+    close(fd);
     return 0;
 }

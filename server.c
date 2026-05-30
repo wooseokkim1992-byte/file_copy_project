@@ -1,4 +1,5 @@
 
+#include "file_search.h"
 #include "socket_common.h"
 #include <stdint.h>
 
@@ -62,6 +63,12 @@ int main(int argc, char **argv){
         return 1;
     }
     printf("received file size : %lld",file_size);
+    
+    const char *new_file_path = reconstruct_path_1("./download", filename);
+    if(recv_file(client_fd,new_file_path,(ssize_t)file_size)<0){
+        close(client_fd);
+        return 1;
+    }
 
     close(client_fd);
     close(server_fd);
