@@ -1,5 +1,6 @@
 
 #include "socket_common.h"
+#include <stdint.h>
 
 int main(int argc, char **argv){
     if(argc<2){
@@ -12,8 +13,8 @@ int main(int argc, char **argv){
         return 1;
     }
     
-    ssize_t server_fd;
-    ssize_t client_fd;
+    int server_fd;
+    int client_fd;
     if((server_fd=socket(AF_INET,SOCK_STREAM,0))<0){
         perror("failed to initialize socket \n");
         return 1;
@@ -56,6 +57,12 @@ int main(int argc, char **argv){
         return 1;
     }
     printf("received file name : %s\n",filename);
+    uint64_t file_size = -1;
+    if((file_size=receive_file_size(client_fd))<0){
+        return 1;
+    }
+    printf("received file size : %lld",file_size);
+
     close(client_fd);
     close(server_fd);
     return 0;

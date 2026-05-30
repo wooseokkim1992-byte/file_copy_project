@@ -31,6 +31,10 @@ int main(int argc,char **argv){
         close(sock_fd);
         return 1;
     }
+    if(send_file_size(sock_fd,path)<0){
+        close(sock_fd);
+        return 1;
+    }
     close(sock_fd);
     return 0;
 }

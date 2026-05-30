@@ -77,6 +77,30 @@ int send_file_name(int sock_fd,char *filename){
     return 0;
 }
 
+int send_file_size(const int sock_fd,const char *file_path){
+    int file_size=0;
+    if((file_size=get_file_size(file_path))<0){
+        return 1;
+    }
+    printf("file size : %d  ",file_size);
+    uint64_t net_file_size = tcp_htonll(file_size);
+    printf("net file size : %lld\n",net_file_size);
+    if(send_data_byte_to_other_side(sock_fd,&net_file_size, sizeof(net_file_size))<0){
+        return -1;
+    }
+    return 0;
+}
+
+uint64_t receive_file_size(const int sock_fd){
+    uint64_t file_size;
+    if(revc_data_byte_from_other_side(sock_fd, &file_size, sizeof(file_size))<0){
+        return -1;
+    }
+    return tcp_ntohll(file_size);
+}
+
+
+
 int get_port_num(const char *port_str,uint16_t *ptr){
     int port = atoi(port_str);
     printf("port : %d\n",port);

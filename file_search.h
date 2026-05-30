@@ -41,4 +41,5 @@
     int copy_file(const char* src,const char* dest);
     int move_file(const char *src_path,const char *dest_path);
     const char* check_file_or_dir(const char *path);
+    uint64_t get_file_size(const char *file_path);
 #endif

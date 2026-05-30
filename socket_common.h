@@ -32,6 +32,8 @@ int set_connection_with_server(
     int *sock_fd,const char*server_ip,
     uint16_t port
 );
+int send_file_size(const int sock_fd,const char *file_path);
+uint64_t receive_file_size(const int sock_fd);
 
 static inline uint64_t tcp_htonll(uint64_t value)
 {

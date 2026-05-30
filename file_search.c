@@ -185,3 +185,11 @@ char* reconstruct_path_1(const char* dir_path,const char* file_name){
     return final_path;
 }
 
+uint64_t get_file_size(const char *file_path){
+    struct stat st;
+    if(stat(file_path,&st)<0){
+        fprintf(stderr,"failed to get ");
+        return -1;
+    }
+    return st.st_size;
+}
